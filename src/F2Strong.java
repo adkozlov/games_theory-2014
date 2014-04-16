@@ -2,17 +2,19 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author adkozlov
  */
-public class E2Nash implements Runnable {
+public class F2Strong implements Runnable {
 
-    final private static String FILENAME = "nash";
+    final private static String FILENAME = "strong";
 
     public static void main(String[] args) throws IOException {
-        new Thread(new E2Nash()).run();
+        new Thread(new F2Strong()).run();
     }
 
     @Override
@@ -30,25 +32,40 @@ public class E2Nash implements Runnable {
         }
     }
 
-    private Set<Pair> get(int[][] m, boolean swap) {
-        Set<Pair> result = new HashSet<>();
+    private List<Pair> get(int[][] a, int[][] b) {
+        List<Pair> result = new ArrayList<>();
 
-        for (int i = 0; i < m.length; i++) {
-            int temp = m[i][0];
-            List<Pair> tempList = new ArrayList<>();
+        final int m = a.length;
+        final int n = a[0].length;
 
-            for (int j = 0; j < m[i].length; j++) {
-                if (m[i][j] >= temp) {
-                    if (m[i][j] > temp) {
-                        temp = m[i][j];
-                        tempList = new ArrayList<>();
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                boolean isStrong = true;
+
+                for (int k = 0; k < m && isStrong; k++) {
+                    if (a[i][j] < a[k][j]) {
+                        isStrong = false;
                     }
+                }
 
-                    tempList.add(new Pair(i + 1, j + 1, swap));
+                for (int k = 0; k < n && isStrong; k++) {
+                    if (b[i][j] < b[i][k]) {
+                        isStrong = false;
+                    }
+                }
+
+                for (int k1 = 0; k1 < m && isStrong; k1++) {
+                    for (int k2 = 0; k2 < n && isStrong; k2++) {
+                        if (a[i][j] + b[i][j] < a[k1][k2] + b[k1][k2]) {
+                            isStrong = false;
+                        }
+                    }
+                }
+
+                if (isStrong) {
+                    result.add(new Pair(i + 1, j + 1));
                 }
             }
-
-            result.addAll(tempList);
         }
 
         return result;
@@ -58,11 +75,10 @@ public class E2Nash implements Runnable {
         int m = nextInt();
         int n = nextInt();
 
-        int[][] a = transpose(readMatrix(m, n));
+        int[][] a = readMatrix(m, n);
         int[][] b = readMatrix(m, n);
 
-        Set<Pair> result = get(a, true);
-        result.retainAll(get(b, false));
+        List<Pair> result = get(a, b);
 
         pw.println(result.size());
         for (Pair pair : result) {
@@ -73,32 +89,14 @@ public class E2Nash implements Runnable {
     private static class Pair {
         private final int i, j;
 
-        private Pair(int i, int j, boolean swap) {
-            this.i = swap ? j : i;
-            this.j = swap ? i : j;
+        private Pair(int i, int j) {
+            this.i = i;
+            this.j = j;
         }
 
         @Override
         public String toString() {
             return i + " " + j;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Pair)) return false;
-
-            Pair pair = (Pair) o;
-
-            if (i != pair.i) return false;
-            return j == pair.j;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = i;
-            result = 31 * result + j;
-            return result;
         }
     }
 
@@ -108,18 +106,6 @@ public class E2Nash implements Runnable {
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 result[i][j] = nextInt();
-            }
-        }
-
-        return result;
-    }
-
-    private static int[][] transpose(int[][] matrix) {
-        int[][] result = new int[matrix[0].length][matrix.length];
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                result[j][i] = matrix[i][j];
             }
         }
 
